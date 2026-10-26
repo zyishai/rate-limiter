@@ -47,11 +47,14 @@ const endpointFilter = process.env['ENDPOINT']
 const everyEndpoint = (scenario: ScenarioName): Run[] =>
   ENDPOINTS.map((endpoint) => ({ scenario, endpoint }));
 
-const plannedRuns = (): Run[] => [
-  ...LOOP_SCENARIOS.flatMap(everyEndpoint),
-  ...(singleInstance ? everyEndpoint('window_boundary') : []),
-  ...REDIS_SCENARIOS.map((scenario) => ({ scenario, endpoint: '/robust' as const })),
-];
+// One instance only serves window_boundary, so it can't overwrite the 3-instance results.
+const plannedRuns = (): Run[] =>
+  singleInstance
+    ? everyEndpoint('window_boundary')
+    : [
+        ...LOOP_SCENARIOS.flatMap(everyEndpoint),
+        ...REDIS_SCENARIOS.map((scenario) => ({ scenario, endpoint: '/robust' as const })),
+      ];
 
 const selectRuns = (): Run[] =>
   plannedRuns().filter(
@@ -129,7 +132,9 @@ const printTable = (outcomes: readonly Outcome[]): void => {
 const main = async (): Promise<void> => {
   ensureK6();
 
-  if (!singleInstance && (scenarioFilter === undefined || scenarioFilter === 'window_boundary')) {
+  if (singleInstance) {
+    console.log('INSTANCES=1: running window_boundary only, the other scenarios need 3 instances.');
+  } else if (scenarioFilter === undefined || scenarioFilter === 'window_boundary') {
     console.log(
       'Skipping window_boundary: it needs one instance. Restart the stack with INSTANCES=1 and run with INSTANCES=1.',
     );

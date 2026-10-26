@@ -5,6 +5,7 @@ import { createGunzip } from 'node:zlib';
 import { RESULT_FILES } from './runs.ts';
 
 const DECISIONS = ['local', 'global', 'fallback', 'none'] as const;
+const OUTCOMES: readonly Outcome[] = ['allowed', 'limited'];
 const RELEVANT_METRICS = new Set(['http_reqs', 'http_req_duration', 'allowed', 'limited']);
 
 interface Sample {
@@ -15,11 +16,13 @@ interface Sample {
   readonly tags: Readonly<Record<string, string>>;
 }
 
+type Outcome = 'allowed' | 'limited';
+
 interface Second {
   offered: number;
-  allowed: number;
-  limited: number;
-  byDecision: Record<string, number>;
+  allowed: Record<string, number>;
+  limited: Record<string, number>;
+  allowedByScenario: Record<string, number>;
   durationsMs: number[];
 }
 
@@ -102,13 +105,29 @@ const p99 = (values: number[]): number => {
   return sorted[Math.ceil(sorted.length * 0.99) - 1] ?? 0;
 };
 
+const zeroPerDecision = (): Record<string, number> =>
+  Object.fromEntries(DECISIONS.map((decision) => [decision, 0]));
+
 const emptySecond = (): Second => ({
   offered: 0,
-  allowed: 0,
-  limited: 0,
-  byDecision: Object.fromEntries(DECISIONS.map((decision) => [decision, 0])),
+  allowed: zeroPerDecision(),
+  limited: zeroPerDecision(),
+  allowedByScenario: {},
   durationsMs: [],
 });
+
+const total = (perDecision: Record<string, number>): number =>
+  Object.values(perDecision).reduce((sum, value) => sum + value, 0);
+
+const timeRange = (samples: readonly Sample[]): { firstMs: number; lastMs: number } => {
+  let firstMs = Number.POSITIVE_INFINITY;
+  let lastMs = Number.NEGATIVE_INFINITY;
+  for (const { timestampMs } of samples) {
+    firstMs = Math.min(firstMs, timestampMs);
+    lastMs = Math.max(lastMs, timestampMs);
+  }
+  return { firstMs, lastMs };
+};
 
 const count = (samples: readonly Sample[], metric: string): number =>
   samples.filter((sample) => sample.metric === metric).length;
@@ -117,8 +136,8 @@ const admittedPerSecond = (samples: readonly Sample[]): number => {
   const requests = samples.filter((sample) => sample.metric === 'http_reqs');
   if (requests.length === 0) return 0;
 
-  const times = requests.map((sample) => sample.timestampMs);
-  const spanSeconds = Math.max(1, Math.round((Math.max(...times) - Math.min(...times)) / 1000));
+  const { firstMs, lastMs } = timeRange(requests);
+  const spanSeconds = Math.max(1, Math.round((lastMs - firstMs) / 1000));
   return count(samples, 'allowed') / spanSeconds;
 };
 
@@ -144,16 +163,25 @@ const buildTimeline = (samples: readonly Sample[], startMs: number): Second[] =>
     seconds[index] = second;
 
     if (sample.metric === 'http_reqs') second.offered++;
-    if (sample.metric === 'limited') second.limited++;
     if (sample.metric === 'http_req_duration') second.durationsMs.push(sample.value);
-    if (sample.metric === 'allowed') {
-      second.allowed++;
+    if (sample.metric === 'allowed' || sample.metric === 'limited') {
+      const perDecision = second[sample.metric];
       const decision = sample.tags['decision'] ?? 'none';
-      second.byDecision[decision] = (second.byDecision[decision] ?? 0) + 1;
+      perDecision[decision] = (perDecision[decision] ?? 0) + 1;
+    }
+    if (sample.metric === 'allowed') {
+      const { allowedByScenario } = second;
+      allowedByScenario[sample.scenario] = (allowedByScenario[sample.scenario] ?? 0) + 1;
     }
   }
   return Array.from(seconds, (second) => second ?? emptySecond());
 };
+
+const describeDecisions = (samples: readonly Sample[], outcome: Outcome): string =>
+  DECISIONS.map(
+    (decision) =>
+      `${decision}=${samples.filter((s) => s.metric === outcome && s.tags['decision'] === decision).length}`,
+  ).join(' ');
 
 const describeScenarios = (samples: readonly Sample[]): Map<string, number> => {
   const scenarios = [...new Set(samples.map((sample) => sample.scenario))].sort();
@@ -169,14 +197,27 @@ export const summarizeRun = async (dir: string): Promise<RunSummary> => {
   const { samples, startMs } = await readSamples(join(dir, RESULT_FILES.samples));
   const timeline = buildTimeline(samples, startMs);
 
+  // Runs with several k6 scenarios (e.g. two clients) also get allowed per scenario per second.
+  const loadScenarios = [...new Set(samples.map((sample) => sample.scenario))].sort();
+  const scenarioColumns = loadScenarios.length > 1 ? loadScenarios : [];
+
   const timelineTable = formatTable([
-    ['second', 'offered', 'allowed', 'limited', ...DECISIONS, 'p99 ms'],
+    [
+      'second',
+      'offered',
+      'allowed',
+      'limited',
+      ...OUTCOMES.flatMap((outcome) => DECISIONS.map((decision) => `${outcome}_${decision}`)),
+      ...scenarioColumns.map((scenario) => `allowed@${scenario}`),
+      'p99_ms',
+    ],
     ...timeline.map((second, index) => [
       index,
       second.offered,
-      second.allowed,
-      second.limited,
-      ...DECISIONS.map((decision) => second.byDecision[decision] ?? 0),
+      total(second.allowed),
+      total(second.limited),
+      ...OUTCOMES.flatMap((outcome) => DECISIONS.map((decision) => second[outcome][decision] ?? 0)),
+      ...scenarioColumns.map((scenario) => second.allowedByScenario[scenario] ?? 0),
       p99(second.durationsMs).toFixed(1),
     ]),
   ]);
@@ -193,10 +234,7 @@ export const summarizeRun = async (dir: string): Promise<RunSummary> => {
     `offered: ${count(samples, 'http_reqs')}`,
     `allowed: ${allowedSamples.length}`,
     `limited: ${count(samples, 'limited')}`,
-    `allowed by decision: ${DECISIONS.map(
-      (decision) =>
-        `${decision}=${allowedSamples.filter((sample) => sample.tags['decision'] === decision).length}`,
-    ).join(' ')}`,
+    ...OUTCOMES.map((outcome) => `${outcome} by decision: ${describeDecisions(samples, outcome)}`),
     `p99 latency: ${p99(samples.filter((s) => s.metric === 'http_req_duration').map((s) => s.value)).toFixed(1)} ms`,
     `admitted req/s: ${admittedPerSecond(samples).toFixed(1)}`,
     ...[...perScenario].map(([scenario, rate]) => `  ${scenario}: ${rate.toFixed(1)}`),

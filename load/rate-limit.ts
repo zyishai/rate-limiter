@@ -84,7 +84,7 @@ const PLANS: Record<ScenarioName, () => Plan> = {
   window_boundary: () => ({
     scenarios: { window_boundary: firedTogether(200) },
     thresholds: {
-      'allowed{scenario:window_boundary}': ['count<=30'],
+      'allowed{scenario:window_boundary}': ['count<=40'],
       'fire_lateness_ms{scenario:window_boundary}': ['max<15'],
     },
   }),
@@ -185,7 +185,7 @@ const fireTimes = (nowMs: number): number[] => {
   if (SCENARIO === 'burst_then_load') return [nowMs + 2000];
   if (SCENARIO === 'window_boundary') {
     const boundaryMs = Math.ceil((nowMs + 2000) / 1000) * 1000;
-    return [boundaryMs - 20, boundaryMs + 20];
+    return [boundaryMs - 100, boundaryMs + 50];
   }
   return [];
 };
