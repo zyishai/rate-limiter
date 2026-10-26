@@ -17,7 +17,7 @@ work. Rejected requests return `429` with `Retry-After` in whole seconds (at lea
 
 ```mermaid
 flowchart LR
-  R[Request] --> L{Local guard<br/>200 req/s per instance}
+  R[Request] --> L{Local guard<br/>token bucket per instance<br/>r=200/s, B=40}
   L -- over --> L429[429 local]
   L -- ok --> G{Redis token bucket<br/>r=100/s, B=20}
   G -- allowed --> G200[200 global]
@@ -27,8 +27,12 @@ flowchart LR
   F -- over --> F429[429 fallback]
 ```
 
-1. **Local guard.** A per instance fixed window of 200 req/s per key. It rejects floods before they
-   reach Redis.
+1. **Local guard.** A per instance token bucket per key: 200 req/s with a burst of 40. It rejects
+   floods before they reach Redis. Its rate and burst are twice the global ones, so it never
+   rejects traffic the global limit would allow. It used to be a fixed window of 200 per second,
+   which let a fast client spend all 200 in the first ~150 ms of each window: Redis only saw that
+   slice, and a client on one busy connection got 49 req/s instead of 100. A token bucket spreads
+   what it lets through evenly across the second.
 2. **Global.** One Lua script reads the bucket, refills it using Redis `TIME`, decides, writes it
    back and sets a TTL, all atomically. Every instance shares the same bucket per key.
 3. **Fallback.** When Redis errors or takes longer than 20 ms, each instance switches to a strict
@@ -43,6 +47,10 @@ request, and no resending of in flight commands after a reconnect. When the conn
 reconnects with a backoff that starts at 50 ms and is capped at 1 s, plus up to 100 ms of random
 jitter so instances don't reconnect all at once.
 
+When Redis fails or comes back, the switch over-admits for about one second: the layer taking over
+starts with a full bucket, so up to one extra burst gets through per switch. Recovery to `global`
+takes under a second, thanks to the capped, jittered backoff.
+
 ## Project structure
 
 ```text
@@ -55,6 +63,7 @@ jitter so instances don't reconnect all at once.
 │   ├── rate-limit.ts          # the k6 script: scenarios, checks, thresholds
 │   ├── run.ts                 # runs k6 once per scenario and endpoint
 │   ├── summarize.ts           # per second timeline from a run's samples
+│   ├── report.ts              # HTML report with charts per scenario
 │   └── runs.ts                # scenario names, endpoints and result paths
 ├── results/                   # load test output, not committed
 └── src/
@@ -148,7 +157,8 @@ burst were allowed". k6 exits with code `0` when every threshold passes and `99`
 - **A fresh API key per run**, so no run starts with a bucket or window used by an earlier one.
 - **Toxiproxy is reset after every run** (and before it), so an injected fault never leaks into
   the next run.
-- **`window_boundary` needs one API instance** (`INSTANCES=1`).
+- **`window_boundary` needs one API instance** (`INSTANCES=1`). With `INSTANCES=1` the runner runs
+  only `window_boundary`, so a one instance stack can't overwrite the other scenarios' results.
 - **A run with `dropped_iterations` above 0 is invalid.** k6 couldn't send the load it was asked
   to send, so the numbers say nothing about the limiter.
 
@@ -161,7 +171,7 @@ which uses port `8081` (balanced per connection). The stack runs 3 API instances
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | `normal_load`      | 100 req/s for 30 s                                                                                                                     | Under normal load all three endpoints look fine           |
 | `burst_then_load`  | 100 requests fired together at about 2 s, then 100 req/s from 3 s for 30 s, on the same key                                            | Burst control                                             |
-| `window_boundary`  | One instance. 100 requests fired 20 ms before a second boundary, 100 more 20 ms after it                                               | The fixed window boundary problem                         |
+| `window_boundary`  | One instance. 100 requests fired 100 ms before a second boundary, 100 more 50 ms after it                                              | The fixed window boundary problem                         |
 | `over_limit`       | 500 req/s for 30 s                                                                                                                     | The "limit times instances" problem                       |
 | `connections`      | Port `8081`, 30 s, two clients with their own keys: one connection sending as fast as it can, and 500 req/s spread over 50 connections | The same limiter gives different results per client       |
 | `ramp`             | From 0 to 400 req/s over 60 s                                                                                                          | Where each endpoint stops admitting more                  |
@@ -179,7 +189,7 @@ Expected results per endpoint:
 | ------------------ | ------------------------ | ---------------------------------------------- | --------------------------------------------------------------------------- |
 | `normal_load`      | All allowed              | All allowed                                    | All allowed                                                                 |
 | `burst_then_load`  | All 100 of the burst     | All 100 of the burst                           | About 20 of the burst, then 100 req/s                                       |
-| `window_boundary`  | All 200                  | All 200 within 40 ms                           | About 24 (the burst plus 40 ms of refill)                                   |
+| `window_boundary`  | All 200                  | All 200 within 150 ms                          | At most 40 (the burst of 20 plus 150 ms of refill)                          |
 | `over_limit`       | 500 req/s                | About 300 req/s (100 on each instance)         | About 100 req/s                                                             |
 | `connections`      | Everything, both clients | About 100 req/s for one connection, 300 for 50 | About 100 req/s for each client                                             |
 | `ramp`             | Never flattens           | Flattens at about 300 req/s                    | Flattens at about 100 req/s                                                 |
@@ -206,13 +216,19 @@ And per scenario:
 | ------------------ | ----------------------------------------------------------------------------------------- |
 | `normal_load`      | `limited_rate` below 2%                                                                   |
 | `burst_then_load`  | At most 30 of the burst allowed; 2,700 to 3,100 of the load allowed                       |
-| `window_boundary`  | At most 30 allowed; every request fired less than 15 ms late                              |
+| `window_boundary`  | At most 40 allowed; every request fired less than 15 ms late                              |
 | `over_limit`       | 2,700 to 3,300 allowed                                                                    |
 | `connections`      | 2,700 to 3,300 allowed per client; the one connection client sent at least 3,000 requests |
 | `ramp`             | 4,700 to 5,800 allowed                                                                    |
 | `redis_slow_below` | No `fallback` decisions; 2,700 to 3,300 allowed                                           |
 | `redis_slow_above` | Some `fallback` decisions; at most 3,300 allowed                                          |
 | `redis_down`       | Some `fallback` decisions; 5,400 to 6,600 allowed                                         |
+
+The `window_boundary` threshold went from 30 to 40 because the first version of the test was
+wrong, not the limiter. One instance needs about 40 ms to process 100 requests, so a burst fired
+20 ms before the boundary spilled past it and spent the next window's quota. The bursts now fire
+100 ms before and 50 ms after the boundary, and 150 ms of refill at 100 req/s adds 15 to the burst
+of 20.
 
 Only load requests are tagged `role:load`. Warm up requests and Toxiproxy calls are tagged
 `role:control`, so they don't count.
@@ -250,7 +266,7 @@ three:
 
 ```sh
 INSTANCES=1 docker compose up -d
-INSTANCES=1 SCENARIO=window_boundary npm run load
+INSTANCES=1 npm run load          # runs window_boundary only
 docker compose up -d
 ```
 
@@ -279,24 +295,35 @@ docker compose run --rm --service-ports \
   k6 run --out csv=results/over_limit-basic/samples.csv.gz \
   -e SCENARIO=over_limit -e ENDPOINT=/basic /load/rate-limit.ts
 
-# Then build the timeline
+# Then build the timeline and the report
 npm run load:summarize -- results/over_limit-basic
+npm run load:report
 ```
 
 ### Read the results
 
 Every run writes to `results/<scenario>-<endpoint>/`:
 
-| File             | What it is                                                                                                                                                                                                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `report.html`    | The k6 dashboard as a single page with charts. Open it in a browser                                                                                                                                                                                                                  |
-| `samples.csv.gz` | Every measurement with its timestamp in milliseconds. Peek with `gunzip -c samples.csv.gz \| head`                                                                                                                                                                                   |
-| `summary.txt`    | k6's end of test summary. `✓` and `✗` mark passed and failed thresholds                                                                                                                                                                                                              |
-| `timeline.txt`   | One row per second: offered, allowed and limited requests, allowed requests by decision (`local`, `global`, `fallback`, or `none` for endpoints without that header) and p99 latency. Then the totals, admitted req/s per k6 scenario and the instances that served allowed requests |
+| File              | What it is                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `report.html`     | The k6 dashboard as a single page with charts. Open it in a browser                                                                                                                                                                                                                                                                                                                                         |
+| `samples.csv.gz`  | Every measurement with its timestamp in milliseconds. Peek with `gunzip -c samples.csv.gz \| head`                                                                                                                                                                                                                                                                                                          |
+| `thresholds.json` | Every threshold with its expression, whether it passed and the observed value                                                                                                                                                                                                                                                                                                                               |
+| `summary.txt`     | k6's end of test summary. `✓` and `✗` mark passed and failed thresholds                                                                                                                                                                                                                                                                                                                                     |
+| `timeline.txt`    | One row per second: offered, allowed and limited (rejected with 429) requests, allowed and limited requests by decision (`local`, `global`, `fallback`, or `none` for endpoints without that header), allowed requests per client (`allowed@<scenario>`, only in runs with several clients) and p99 latency. Then the totals, admitted req/s per k6 scenario and the instances that served allowed requests |
 
 At the end, the runner prints one table with every run: scenario, endpoint, admitted req/s and
 whether the thresholds passed. A `failed` on `/naive` or `/basic` is the expected result. A
 `failed` on `/robust`, or an `error`, needs a look.
+
+The runner then builds an HTML report in `results/report/` (`npm run load:report` rebuilds it from
+whatever runs exist). `index.html` holds the same table with links to one page per scenario. Each
+page describes the scenario and the expected result, charts allowed req/s per second for every
+endpoint against the limit (one chart per client in `connections`; a line far above the others is
+labeled with its value instead of drawn, so it doesn't flatten them), charts how `/robust` decided
+each second in two charts (allowed by `global` or `fallback`, and rejected (429) by `local`,
+`global` or `fallback`), and lists every threshold with its observed value. Pages work offline, in light and dark mode. k6's own `report.html` only charts
+its built in metrics, which is why this report exists.
 
 ## Develop locally
 
