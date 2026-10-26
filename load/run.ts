@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { buildReport } from './report.ts';
 import {
   ENDPOINTS,
   type Endpoint,
@@ -174,6 +175,7 @@ const main = async (): Promise<void> => {
   }
 
   printTable(outcomes);
+  console.log(`\nReport: ${buildReport()}`);
 };
 
 await main();

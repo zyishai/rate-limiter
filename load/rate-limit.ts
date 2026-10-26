@@ -146,17 +146,19 @@ const PLANS: Record<ScenarioName, () => Plan> = {
 
 const plan = PLANS[SCENARIO]();
 
+const THRESHOLDS: Record<string, string[]> = {
+  dropped_iterations: ['count==0'],
+  'http_req_failed{role:load}': ['rate<0.01'],
+  'unexpected_status{role:load}': ['count==0'],
+  missing_retry_after: ['count==0'],
+  'checks{role:load}': ['rate>0.99'],
+  'http_req_duration{role:load}': ['p(95)<50', 'p(99)<100'],
+  ...plan.thresholds,
+};
+
 export const options: Options = {
   scenarios: plan.scenarios,
-  thresholds: {
-    dropped_iterations: ['count==0'],
-    'http_req_failed{role:load}': ['rate<0.01'],
-    'unexpected_status{role:load}': ['count==0'],
-    missing_retry_after: ['count==0'],
-    'checks{role:load}': ['rate>0.99'],
-    'http_req_duration{role:load}': ['p(95)<50', 'p(99)<100'],
-    ...plan.thresholds,
-  },
+  thresholds: { ...THRESHOLDS },
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(95)', 'p(99)'],
 };
 
@@ -277,12 +279,45 @@ export function enableRedis(): void {
   toxiproxy('/proxies/redis', { enabled: true });
 }
 
-export function handleSummary(data: object): Record<string, string> {
+interface SummaryData {
+  readonly metrics: Record<
+    string,
+    {
+      readonly values: Record<string, number>;
+      readonly thresholds?: Record<string, { readonly ok: boolean }>;
+    }
+  >;
+}
+
+interface ThresholdResult {
+  readonly metric: string;
+  readonly expression: string;
+  readonly passed: boolean;
+  readonly observed: number | null;
+}
+
+const AGGREGATION = /^\s*(count|rate|value|avg|min|med|max|p\([\d.]+\))/;
+
+// Reads THRESHOLDS rather than options.thresholds, which k6 rewrites into its own objects.
+const thresholdResults = (data: SummaryData): ThresholdResult[] =>
+  Object.entries(THRESHOLDS).flatMap(([metric, expressions]) =>
+    expressions.map((expression) => {
+      const summary = data.metrics[metric];
+      const aggregation = AGGREGATION.exec(expression)?.[1];
+      return {
+        metric,
+        expression,
+        passed: summary?.thresholds?.[expression]?.ok ?? false,
+        observed: aggregation === undefined ? null : (summary?.values[aggregation] ?? null),
+      };
+    }),
+  );
+
+export function handleSummary(data: SummaryData): Record<string, string> {
+  const dir = resultsDir(SCENARIO, ENDPOINT);
   return {
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
-    [`${resultsDir(SCENARIO, ENDPOINT)}/${RESULT_FILES.summary}`]: textSummary(data, {
-      indent: ' ',
-      enableColors: false,
-    }),
+    [`${dir}/${RESULT_FILES.summary}`]: textSummary(data, { indent: ' ', enableColors: false }),
+    [`${dir}/${RESULT_FILES.thresholds}`]: JSON.stringify(thresholdResults(data), null, 2),
   };
 }

@@ -35,6 +35,7 @@ export const RESULT_FILES = {
   samples: 'samples.csv.gz',
   report: 'report.html',
   summary: 'summary.txt',
+  thresholds: 'thresholds.json',
   timeline: 'timeline.txt',
 } as const;
 
