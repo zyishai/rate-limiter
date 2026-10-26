@@ -2,10 +2,8 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "nodenext",
-    "rootDir": "./src",
-    "types": [
-      "node"
-    ],
+    "rootDir": ".",
+    "types": ["node"],
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
@@ -19,7 +17,6 @@
     "noPropertyAccessFromIndexSignature": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src", "load"],
+  "exclude": ["load/rate-limit.ts", "load/k6-summary.d.ts"]
 }

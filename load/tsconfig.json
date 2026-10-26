@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "rootDir": ".",
+    "types": ["k6"]
+  },
+  "include": ["rate-limit.ts", "k6-summary.d.ts"],
+  "exclude": []
+}

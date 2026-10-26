@@ -36,3 +36,23 @@ services:
       - "8081:8081" # tcp mode, balanced per connection
     depends_on:
       - api
+
+  # Load generator, started only on demand: docker compose run --rm k6 run ...
+  k6:
+    image: grafana/k6:2.3.0
+    profiles: ["load"]
+    working_dir: /
+    volumes:
+      - ./load:/load:ro
+      - ./results:/results
+    environment:
+      BASE_URL: http://haproxy:8080
+      TCP_URL: http://haproxy:8081
+      TOXIPROXY_URL: http://toxiproxy:8474
+      K6_WEB_DASHBOARD_HOST: 0.0.0.0
+    ports:
+      - "127.0.0.1:5665:5665" # live dashboard, needs `docker compose run --service-ports`
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
