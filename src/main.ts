@@ -16,7 +16,7 @@ const redis = createRedisClient(config.redisUrl, limits.redisCommandTimeoutMs);
 registerRoutes(app, {
   basic: new FixedWindowLimiter(limits.basic),
   robust: new RobustLimiter({
-    localGuard: new FixedWindowLimiter(limits.localGuard),
+    localGuard: new TokenBucketLimiter(limits.localGuard),
     global: new RedisTokenBucket(redis, limits.global),
     fallback: new TokenBucketLimiter(limits.fallback),
     logger: app.log,

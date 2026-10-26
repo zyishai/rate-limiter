@@ -1,5 +1,4 @@
 import type { FastifyBaseLogger } from 'fastify';
-import type { FixedWindowLimiter } from './fixed-window.ts';
 import type { RedisTokenBucket } from './redis-token-bucket.ts';
 import type { TokenBucketLimiter } from './token-bucket.ts';
 import type { LimitResult } from './types.ts';
@@ -11,7 +10,7 @@ export interface RobustResult extends LimitResult {
 }
 
 export interface RobustLimiterDeps {
-  readonly localGuard: FixedWindowLimiter;
+  readonly localGuard: TokenBucketLimiter;
   readonly global: RedisTokenBucket;
   readonly fallback: TokenBucketLimiter;
   readonly logger: FastifyBaseLogger;
@@ -28,7 +27,7 @@ export class RobustLimiter {
   async check(key: string): Promise<RobustResult> {
     const { localGuard, global, fallback } = this.#deps;
 
-    const local = localGuard.hit(key);
+    const local = localGuard.take(key);
     if (!local.allowed) return { ...local, decision: 'local' };
 
     try {

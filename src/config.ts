@@ -22,7 +22,7 @@ export interface Config {
 
 export interface Limits {
   readonly basic: WindowConfig;
-  readonly localGuard: WindowConfig;
+  readonly localGuard: BucketConfig;
   readonly global: BucketConfig;
   readonly fallback: BucketConfig;
   readonly redisCommandTimeoutMs: number;
@@ -39,7 +39,7 @@ const globalBucket: BucketConfig = { ratePerSec: 100, burst: 20 };
 
 export const limits: Limits = {
   basic: { limit: 100, windowMs: 1000 },
-  localGuard: { limit: 200, windowMs: 1000 },
+  localGuard: { ratePerSec: 200, burst: 40 },
   global: globalBucket,
   fallback: {
     ratePerSec: Math.ceil(globalBucket.ratePerSec / config.instances),
