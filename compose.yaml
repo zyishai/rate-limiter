@@ -1,0 +1,38 @@
+name: rate-limiter
+
+services:
+  api:
+    build: .
+    init: true
+    environment:
+      PORT: 3001
+      REDIS_URL: redis://toxiproxy:6380
+      INSTANCES: ${INSTANCES:-3}
+    deploy:
+      replicas: ${INSTANCES:-3}
+    depends_on:
+      - toxiproxy
+
+  redis:
+    image: redis:8.8-alpine
+
+  # Sits between the api and Redis so load tests can add latency or cut the connection.
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.13.0
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    volumes:
+      - ./toxiproxy/toxiproxy.json:/config/toxiproxy.json:ro
+    ports:
+      - "127.0.0.1:8474:8474" # control API, unauthenticated, so local only
+    depends_on:
+      - redis
+
+  haproxy:
+    image: haproxy:3.4-alpine
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "8080:8080" # http mode, balanced per request
+      - "8081:8081" # tcp mode, balanced per connection
+    depends_on:
+      - api
