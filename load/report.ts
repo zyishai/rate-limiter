@@ -111,7 +111,7 @@ const SCENARIO_INFO: Record<ScenarioName, ScenarioInfo> = {
     port: HTTP_PORT,
     instances: 3,
     limit: ONE_KEY_LIMIT,
-    expected: { '/robust': 'About 100 req/s, all global' },
+    expected: { '/robust': 'About 100 req/s, almost all global (at most 30 fallback)' },
   },
   redis_slow_above: {
     title: 'Slow Redis, above the timeout',

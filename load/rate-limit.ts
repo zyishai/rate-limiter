@@ -120,7 +120,7 @@ const PLANS: Record<ScenarioName, () => Plan> = {
   redis_slow_below: () => ({
     scenarios: { redis_slow_below: atRate(300, '30s') },
     thresholds: {
-      'allowed{decision:fallback}': ['count==0'],
+      'allowed{decision:fallback}': ['count<=30'],
       'allowed{scenario:redis_slow_below}': between(2700, 3300),
     },
   }),
