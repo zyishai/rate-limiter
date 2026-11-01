@@ -360,3 +360,7 @@ Environment variables:
 
 In VS Code, install the recommended extensions when prompted. TypeScript 7 needs the
 TypeScript Native Preview extension for editor support.
+
+## License
+
+[MIT](LICENSE)
