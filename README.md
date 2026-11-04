@@ -65,7 +65,7 @@ takes under a second, thanks to the capped, jittered backoff.
 │   ├── summarize.ts           # per second timeline from a run's samples
 │   ├── report.ts              # HTML report with charts per scenario
 │   └── runs.ts                # scenario names, endpoints and result paths
-├── results/                   # load test output, not committed
+├── results/                   # load test output, raw samples not committed
 └── src/
     ├── main.ts                # wiring and server start
     ├── config.ts              # typed environment and limits
@@ -332,6 +332,11 @@ labeled with its value instead of drawn, so it doesn't flatten them), charts how
 each second in two charts (allowed by `global` or `fallback`, and rejected (429) by `local`,
 `global` or `fallback`), and lists every threshold with its observed value. Pages work offline, in light and dark mode. k6's own `report.html` only charts
 its built in metrics, which is why this report exists.
+
+The latest full run is committed under `results/` and its report is published at
+<https://zyishai.github.io/rate-limiter/results/report/>. The `samples.csv.gz` files are too large
+for the repository, so they are attached to the
+[`load-results-2026-11-04` release](https://github.com/zyishai/rate-limiter/releases/tag/load-results-2026-11-04).
 
 ## Develop locally
 
