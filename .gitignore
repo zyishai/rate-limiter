@@ -1,5 +1,5 @@
 node_modules/
 coverage/
-results/
+results/**/*.csv.gz
 .DS_Store
 *.log
