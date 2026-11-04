@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rate limiter load tests</title><style>
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb; --page: #f9f9f7; --text-primary: #0b0b0b; --text-secondary: #52514e;
+  --text-muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --good: #006300; --critical: #d03b3b;
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100; --series-5: #e87ba4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface: #1a1a19; --page: #0d0d0d; --text-primary: #ffffff; --text-secondary: #c3c2b7;
+    --text-muted: #898781; --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --good: #0ca30c; --critical: #e66767;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181;
+  }
+}
+body { margin: 0; padding: 24px 16px 48px; background: var(--page); color: var(--text-primary);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 860px; margin: 0 auto; }
+h1 { font-size: 24px; margin: 0 0 8px; } h2 { font-size: 18px; margin: 32px 0 8px; }
+p, dd { color: var(--text-secondary); }
+a { color: var(--series-1); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 16px 0; }
+dt { color: var(--text-muted); } dd { margin: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 12px 0; }
+svg { width: 100%; height: auto; display: block; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; }
+.grid { stroke: var(--grid); stroke-width: 1; } .axis { stroke: var(--axis); stroke-width: 1; }
+.tick { fill: var(--text-muted); } .direct { fill: var(--text-secondary); font-weight: 600; }
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.limit { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.segment { stroke: var(--surface); stroke-width: 1; }
+.hit { fill: transparent; } .hit:hover { fill: var(--grid); fill-opacity: 0.35; }
+.legend { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0; margin: 0 0 8px; color: var(--text-secondary); font-size: 13px; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.swatch { width: 14px; height: 4px; border-radius: 2px; background: var(--swatch); }
+.swatch.dashed { background: repeating-linear-gradient(90deg, var(--swatch) 0 4px, transparent 4px 7px); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--text-muted); font-weight: 600; }
+.numbers td, .numbers th { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.passed .status { color: var(--good); font-weight: 600; } .failed .status { color: var(--critical); font-weight: 600; }
+.scroll { overflow-x: auto; } details { margin: 8px 0; } summary { cursor: pointer; color: var(--text-secondary); }
+code { font-size: 12px; }
+</style></head><body><main><h1>Rate limiter load tests</h1>
+<p>Each scenario page charts allowed requests per second for every endpoint against the limit, how <code>/robust</code> decided, and every threshold with its observed value. A failed threshold on <code>/naive</code> or <code>/basic</code> is the expected result.</p>
+<div class="card scroll"><table><thead><tr><th>Scenario</th><th>Endpoint</th><th>Admitted req/s</th><th>Thresholds</th></tr></thead><tbody><tr><td><a href="normal_load.html">normal_load</a></td><td><code>/naive</code></td><td>100.0</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="normal_load.html">normal_load</a></td><td><code>/basic</code></td><td>100.0</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="normal_load.html">normal_load</a></td><td><code>/robust</code></td><td>100.0</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="burst_then_load.html">burst_then_load</a></td><td><code>/naive</code></td><td>burst 100.0, load 100.0</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="burst_then_load.html">burst_then_load</a></td><td><code>/basic</code></td><td>burst 100.0, load 100.0</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="burst_then_load.html">burst_then_load</a></td><td><code>/robust</code></td><td>burst 20.0, load 100.0</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="window_boundary.html">window_boundary</a></td><td><code>/naive</code></td><td>200.0</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="window_boundary.html">window_boundary</a></td><td><code>/basic</code></td><td>200.0</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="window_boundary.html">window_boundary</a></td><td><code>/robust</code></td><td>35.0</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="over_limit.html">over_limit</a></td><td><code>/naive</code></td><td>500.0</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="over_limit.html">over_limit</a></td><td><code>/basic</code></td><td>304.8</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="over_limit.html">over_limit</a></td><td><code>/robust</code></td><td>100.6</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="connections.html">connections</a></td><td><code>/naive</code></td><td>many_connections 500.0, one_connection 3816.8</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="connections.html">connections</a></td><td><code>/basic</code></td><td>many_connections 301.4, one_connection 103.3</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="connections.html">connections</a></td><td><code>/robust</code></td><td>many_connections 100.6, one_connection 100.6</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="ramp.html">ramp</a></td><td><code>/naive</code></td><td>203.4</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="ramp.html">ramp</a></td><td><code>/basic</code></td><td>191.8</td><td class="failed"><span class="status">failed</span></td></tr><tr><td><a href="ramp.html">ramp</a></td><td><code>/robust</code></td><td>89.3</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="redis_slow_below.html">redis_slow_below</a></td><td><code>/robust</code></td><td>100.6</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="redis_slow_above.html">redis_slow_above</a></td><td><code>/robust</code></td><td>102.6</td><td class="passed"><span class="status">passed</span></td></tr><tr><td><a href="redis_down.html">redis_down</a></td><td><code>/robust</code></td><td>101.8</td><td class="passed"><span class="status">passed</span></td></tr></tbody></table></div></main></body></html>

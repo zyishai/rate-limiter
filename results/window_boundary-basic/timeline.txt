@@ -1,0 +1,15 @@
+second  offered  allowed  limited  allowed_local  allowed_global  allowed_fallback  allowed_none  limited_local  limited_global  limited_fallback  limited_none  p99_ms
+     0        0        0        0              0               0                 0             0              0               0                 0             0     0.0
+     1      100      100        0              0               0                 0           100              0               0                 0             0    13.9
+     2      100      100        0              0               0                 0           100              0               0                 0             0    15.5
+
+offered: 200
+allowed: 200
+limited: 0
+allowed by decision: local=0 global=0 fallback=0 none=200
+limited by decision: local=0 global=0 fallback=0 none=0
+p99 latency: 15.4 ms
+admitted req/s: 200.0
+  window_boundary: 200.0
+instances serving allowed requests: 1
+  172.18.0.4:3001: 200

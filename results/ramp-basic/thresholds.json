@@ -1,0 +1,56 @@
+[
+  {
+    "metric": "dropped_iterations",
+    "expression": "count==0",
+    "passed": true,
+    "observed": 0
+  },
+  {
+    "metric": "http_req_failed{role:load}",
+    "expression": "rate<0.01",
+    "passed": true,
+    "observed": 0
+  },
+  {
+    "metric": "unexpected_status{role:load}",
+    "expression": "count==0",
+    "passed": true,
+    "observed": 0
+  },
+  {
+    "metric": "missing_retry_after",
+    "expression": "count==0",
+    "passed": true,
+    "observed": 0
+  },
+  {
+    "metric": "checks{role:load}",
+    "expression": "rate>0.99",
+    "passed": true,
+    "observed": 1
+  },
+  {
+    "metric": "http_req_duration{role:load}",
+    "expression": "p(95)<50",
+    "passed": true,
+    "observed": 2.3693558999999986
+  },
+  {
+    "metric": "http_req_duration{role:load}",
+    "expression": "p(99)<100",
+    "passed": true,
+    "observed": 4.22588291
+  },
+  {
+    "metric": "allowed{scenario:ramp}",
+    "expression": "count>=4700",
+    "passed": true,
+    "observed": 11317
+  },
+  {
+    "metric": "allowed{scenario:ramp}",
+    "expression": "count<=5800",
+    "passed": false,
+    "observed": 11317
+  }
+]

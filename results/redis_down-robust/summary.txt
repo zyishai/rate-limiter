@@ -1,0 +1,34 @@
+     ✓ status is 200 or 429
+     ✓ X-Instance is present
+     ✓ 429 has a valid Retry-After
+     ✓ X-Limiter-Decision is local, global or fallback
+
+     allowed........................: 6109    101.811093/s
+     ✓ { decision:fallback }........: 2134    35.56472/s
+     ✓ { scenario:redis_down }......: 6109    101.811093/s
+     checks.........................: 100.00% ✓ 72000      ✗ 0    
+     ✓ { role:load }................: 100.00% ✓ 72000      ✗ 0    
+     data_received..................: 4.5 MB  74 kB/s
+     data_sent......................: 2.0 MB  33 kB/s
+   ✓ dropped_iterations.............: 0       0/s
+     http_req_blocked...............: avg=5.5µs   min=1.04µs   med=4.95µs   max=576.16µs p(95)=8.33µs  p(99)=22.7µs  
+     http_req_connecting............: avg=439ns   min=0s       med=0s       max=244.33µs p(95)=0s      p(99)=0s      
+     http_req_duration..............: avg=1.16ms  min=199.54µs med=1.07ms   max=19.95ms  p(95)=2.08ms  p(99)=3.19ms  
+       { expected_response:true }...: avg=1.16ms  min=199.54µs med=1.07ms   max=19.95ms  p(95)=2.08ms  p(99)=3.19ms  
+     ✓ { role:load }................: avg=1.16ms  min=270.08µs med=1.07ms   max=19.95ms  p(95)=2.08ms  p(99)=3.19ms  
+     http_req_failed................: 0.00%   ✓ 0          ✗ 18004
+     ✓ { role:load }................: 0.00%   ✓ 0          ✗ 18000
+     http_req_receiving.............: avg=53.58µs min=7.25µs   med=52.95µs  max=1.31ms   p(95)=95.49µs p(99)=157.99µs
+     http_req_sending...............: avg=20.89µs min=2.29µs   med=16.91µs  max=1.35ms   p(95)=39.29µs p(99)=58.95µs 
+     http_req_tls_handshaking.......: avg=0s      min=0s       med=0s       max=0s       p(95)=0s      p(99)=0s      
+     http_req_waiting...............: avg=1.08ms  min=155.54µs med=999.81µs max=19.9ms   p(95)=1.99ms  p(99)=3.08ms  
+     http_reqs......................: 18004   300.050241/s
+     iteration_duration.............: avg=1.34ms  min=353.25µs med=1.28ms   max=20.14ms  p(95)=2.33ms  p(99)=3.44ms  
+     iterations.....................: 18002   300.01691/s
+     limited........................: 11891   198.172485/s
+     limited_rate...................: 66.06%  ✓ 11891      ✗ 6109 
+   ✓ missing_retry_after............: 0       0/s
+     unexpected_status..............: 0       0/s
+     ✓ { role:load }................: 0       0/s
+     vus............................: 0       min=0        max=2  
+     vus_max........................: 52      min=52       max=52 

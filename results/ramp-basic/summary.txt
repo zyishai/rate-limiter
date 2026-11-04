@@ -1,0 +1,32 @@
+     ✓ status is 200 or 429
+     ✓ X-Instance is present
+     ✓ 429 has a valid Retry-After
+
+     allowed........................: 11317   188.598986/s
+     ✗ { scenario:ramp }............: 11317   188.598986/s
+     checks.........................: 100.00% ✓ 36000      ✗ 0    
+     ✓ { role:load }................: 100.00% ✓ 36000      ✗ 0    
+     data_received..................: 2.3 MB  38 kB/s
+     data_sent......................: 1.2 MB  21 kB/s
+   ✓ dropped_iterations.............: 0       0/s
+     http_req_blocked...............: avg=9.97µs   min=833ns    med=5.41µs   max=4.45ms  p(95)=10.66µs  p(99)=38.29µs 
+     http_req_connecting............: avg=2.73µs   min=0s       med=0s       max=3.49ms  p(95)=0s       p(99)=0s      
+     http_req_duration..............: avg=1.06ms   min=256.95µs med=850.58µs max=34.2ms  p(95)=2.36ms   p(99)=4.22ms  
+       { expected_response:true }...: avg=1.06ms   min=256.95µs med=850.58µs max=34.2ms  p(95)=2.36ms   p(99)=4.22ms  
+     ✓ { role:load }................: avg=1.06ms   min=256.95µs med=850.79µs max=34.2ms  p(95)=2.36ms   p(99)=4.22ms  
+     http_req_failed................: 0.00%   ✓ 0          ✗ 12002
+     ✓ { role:load }................: 0.00%   ✓ 0          ✗ 12000
+     http_req_receiving.............: avg=59.69µs  min=6.16µs   med=52.58µs  max=2.2ms   p(95)=114.53µs p(99)=218.11µs
+     http_req_sending...............: avg=26.72µs  min=2.62µs   med=20.45µs  max=2.12ms  p(95)=50µs     p(99)=102.08µs
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s      p(95)=0s       p(99)=0s      
+     http_req_waiting...............: avg=975.05µs min=219.83µs med=767.16µs max=34.08ms p(95)=2.21ms   p(99)=4.03ms  
+     http_reqs......................: 12002   200.014582/s
+     iteration_duration.............: avg=1.27ms   min=312.87µs med=1.05ms   max=34.42ms p(95)=2.76ms   p(99)=4.74ms  
+     iterations.....................: 12000   199.981252/s
+     limited........................: 683     11.382266/s
+     limited_rate...................: 5.69%   ✓ 683        ✗ 11317
+   ✓ missing_retry_after............: 0       0/s
+     unexpected_status..............: 0       0/s
+     ✓ { role:load }................: 0       0/s
+     vus............................: 2       min=0        max=2  
+     vus_max........................: 50      min=50       max=50 

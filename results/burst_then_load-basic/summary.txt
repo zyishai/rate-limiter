@@ -1,0 +1,33 @@
+     ✓ status is 200 or 429
+     ✓ X-Instance is present
+     ✓ 429 has a valid Retry-After
+
+     allowed........................: 3101    93.93403/s
+     ✗ { scenario:burst }...........: 100     3.029153/s
+     ✓ { scenario:load }............: 3001    90.904877/s
+     checks.........................: 100.00% ✓ 9303      ✗ 0    
+     ✓ { role:load }................: 100.00% ✓ 9303      ✗ 0    
+     data_received..................: 599 kB  18 kB/s
+     data_sent......................: 369 kB  11 kB/s
+   ✓ dropped_iterations.............: 0       0/s
+     fire_lateness_ms...............: avg=7.93ms   min=2ms      med=9ms     max=9ms     p(95)=9ms      p(99)=9ms     
+     http_req_blocked...............: avg=247.93µs min=583ns    med=7.33µs  max=15.25ms p(95)=163.11µs p(99)=13.62ms 
+     http_req_connecting............: avg=50.35µs  min=0s       med=0s      max=15.17ms p(95)=0s       p(99)=693.34µs
+     http_req_duration..............: avg=1.83ms   min=236.58µs med=1.36ms  max=12.5ms  p(95)=4.66ms   p(99)=10.51ms 
+       { expected_response:true }...: avg=1.83ms   min=236.58µs med=1.36ms  max=12.5ms  p(95)=4.66ms   p(99)=10.51ms 
+     ✓ { role:load }................: avg=1.73ms   min=303.7µs  med=1.34ms  max=9.19ms  p(95)=4.42ms   p(99)=6.47ms  
+     http_req_failed................: 0.00%   ✓ 0         ✗ 3203 
+     ✓ { role:load }................: 0.00%   ✓ 0         ✗ 3101 
+     http_req_receiving.............: avg=79.3µs   min=5.37µs   med=61.62µs max=2.41ms  p(95)=200.62µs p(99)=454.24µs
+     http_req_sending...............: avg=42.73µs  min=1.83µs   med=24.08µs max=1.85ms  p(95)=135.55µs p(99)=311.37µs
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s      max=0s      p(95)=0s       p(99)=0s      
+     http_req_waiting...............: avg=1.7ms    min=177.08µs med=1.23ms  max=12.48ms p(95)=4.51ms   p(99)=10.38ms 
+     http_reqs......................: 3203    97.023766/s
+     iteration_duration.............: avg=66.76ms  min=386.08µs med=1.67ms  max=2.01s   p(95)=6.11ms   p(99)=2.01s   
+     iterations.....................: 3101    93.93403/s
+     limited_rate...................: 0.00%   ✓ 0         ✗ 3101 
+   ✓ missing_retry_after............: 0       0/s
+     unexpected_status..............: 0       0/s
+     ✓ { role:load }................: 0       0/s
+     vus............................: 1       min=0       max=100
+     vus_max........................: 150     min=150     max=150

@@ -1,0 +1,31 @@
+     ✓ status is 200 or 429
+     ✓ X-Instance is present
+     ✓ 429 has a valid Retry-After
+
+     allowed........................: 15001   499.961813/s
+     ✗ { scenario:over_limit }......: 15001   499.961813/s
+     checks.........................: 100.00% ✓ 45003      ✗ 0    
+     ✓ { role:load }................: 100.00% ✓ 45003      ✗ 0    
+     data_received..................: 2.8 MB  94 kB/s
+     data_sent......................: 1.7 MB  55 kB/s
+   ✓ dropped_iterations.............: 0       0/s
+     http_req_blocked...............: avg=4.55µs   min=708ns    med=3.7µs    max=895.04µs p(95)=7.04µs p(99)=17.95µs 
+     http_req_connecting............: avg=453ns    min=0s       med=0s       max=198.37µs p(95)=0s     p(99)=0s      
+     http_req_duration..............: avg=722.91µs min=227.5µs  med=622.95µs max=11.71ms  p(95)=1.43ms p(99)=2.37ms  
+       { expected_response:true }...: avg=722.91µs min=227.5µs  med=622.95µs max=11.71ms  p(95)=1.43ms p(99)=2.37ms  
+     ✓ { role:load }................: avg=722.97µs min=227.5µs  med=623.41µs max=11.71ms  p(95)=1.43ms p(99)=2.37ms  
+     http_req_failed................: 0.00%   ✓ 0          ✗ 15003
+     ✓ { role:load }................: 0.00%   ✓ 0          ✗ 15001
+     http_req_receiving.............: avg=41.67µs  min=5.95µs   med=37.79µs  max=9.73ms   p(95)=74.5µs p(99)=130.53µs
+     http_req_sending...............: avg=17.78µs  min=2.54µs   med=13.79µs  max=1.2ms    p(95)=34.2µs p(99)=70.91µs 
+     http_req_tls_handshaking.......: avg=0s       min=0s       med=0s       max=0s       p(95)=0s     p(99)=0s      
+     http_req_waiting...............: avg=663.45µs min=181.45µs med=562.58µs max=11.62ms  p(95)=1.34ms p(99)=2.25ms  
+     http_reqs......................: 15003   500.02847/s
+     iteration_duration.............: avg=853.26µs min=278.08µs med=771.12µs max=11.87ms  p(95)=1.64ms p(99)=2.54ms  
+     iterations.....................: 15001   499.961813/s
+     limited_rate...................: 0.00%   ✓ 0          ✗ 15001
+   ✓ missing_retry_after............: 0       0/s
+     unexpected_status..............: 0       0/s
+     ✓ { role:load }................: 0       0/s
+     vus............................: 1       min=0        max=2  
+     vus_max........................: 50      min=50       max=50 

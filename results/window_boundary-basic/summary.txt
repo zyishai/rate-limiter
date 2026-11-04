@@ -1,0 +1,33 @@
+     ✓ status is 200 or 429
+     ✓ X-Instance is present
+     ✓ 429 has a valid Retry-After
+
+     allowed..........................: 200     94.3426/s
+     ✗ { scenario:window_boundary }...: 200     94.3426/s
+     checks...........................: 100.00% ✓ 600        ✗ 0    
+     ✓ { role:load }..................: 100.00% ✓ 600        ✗ 0    
+     data_received....................: 75 kB   35 kB/s
+     data_sent........................: 48 kB   23 kB/s
+   ✓ dropped_iterations...............: 0       0/s
+     fire_lateness_ms.................: avg=3.52ms   min=0s       med=3ms     max=6ms      p(95)=6ms     p(99)=6ms     
+     ✓ { scenario:window_boundary }...: avg=3.52ms   min=0s       med=3ms     max=6ms      p(95)=6ms     p(99)=6ms     
+     http_req_blocked.................: avg=5.67ms   min=625ns    med=78.91µs max=37.41ms  p(95)=36.53ms p(99)=36.84ms 
+     http_req_connecting..............: avg=1.14ms   min=0s       med=19.7µs  max=32.53ms  p(95)=3.48ms  p(99)=23.72ms 
+     http_req_duration................: avg=15.84ms  min=355.12µs med=12.98ms max=35.87ms  p(95)=31.25ms p(99)=34.89ms 
+       { expected_response:true }.....: avg=15.84ms  min=355.12µs med=12.98ms max=35.87ms  p(95)=31.25ms p(99)=34.89ms 
+     ✓ { role:load }..................: avg=8.81ms   min=2.19ms   med=9.06ms  max=15.84ms  p(95)=13.91ms p(99)=15.38ms 
+     http_req_failed..................: 0.00%   ✓ 0          ✗ 402  
+     ✓ { role:load }..................: 0.00%   ✓ 0          ✗ 200  
+     http_req_receiving...............: avg=19.65µs  min=6.2µs    med=11.06µs max=676.12µs p(95)=47.23µs p(99)=160.92µs
+     http_req_sending.................: avg=327.26µs min=2.29µs   med=27.22µs max=2.19ms   p(95)=1.67ms  p(99)=2.17ms  
+     http_req_tls_handshaking.........: avg=0s       min=0s       med=0s      max=0s       p(95)=0s      p(99)=0s      
+     http_req_waiting.................: avg=15.49ms  min=321.29µs med=12.83ms max=35.84ms  p(95)=29.88ms p(99)=34.76ms 
+     http_reqs........................: 402     189.628627/s
+     iteration_duration...............: avg=2.02s    min=1.91s    med=2.01s   max=2.11s    p(95)=2.1s    p(99)=2.11s   
+     iterations.......................: 200     94.3426/s
+     limited_rate.....................: 0.00%   ✓ 0          ✗ 200  
+   ✓ missing_retry_after..............: 0       0/s
+     unexpected_status................: 0       0/s
+     ✓ { role:load }..................: 0       0/s
+     vus..............................: 192     min=192      max=200
+     vus_max..........................: 200     min=200      max=200
